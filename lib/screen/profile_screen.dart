@@ -1,9 +1,5 @@
-
-
 import 'package:e_commerce/services/supabase_auth_service.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -115,7 +111,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Image.network(
                   'https://i.pravatar.cc/200?img=11',
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _,_) => const Icon(
+                  errorBuilder: (_, __, ___) => const Icon(
                     Icons.person,
                     size: 52,
                     color: Color(0xFFB0BAC9),
@@ -156,36 +152,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
           },
           child: _isEditingName
               ? SizedBox(
-            width: 200,
-            child: TextField(
-              controller: _nameController,
-              autofocus: true,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1A1D23),
-              ),
-              decoration: const InputDecoration(
-                isDense: true,
-                border: UnderlineInputBorder(),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF3D7BFF), width: 2),
-                ),
-              ),
-
-              onTapOutside: (_) => setState(() => _isEditingName = false),
-            ),
-          )
+                  width: 200,
+                  child: TextField(
+                    controller: _nameController,
+                    autofocus: true,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1A1D23),
+                    ),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      border: UnderlineInputBorder(),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide:
+                            BorderSide(color: Color(0xFF3D7BFF), width: 2),
+                      ),
+                    ),
+                    onTapOutside: (_) => setState(() => _isEditingName = false),
+                  ),
+                )
               : Text(
-            _nameController.text,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1A1D23),
-              letterSpacing: -0.4,
-            ),
-          ),
+                  _nameController.text,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1A1D23),
+                    letterSpacing: -0.4,
+                  ),
+                ),
         ),
         const SizedBox(height: 4),
 
@@ -393,11 +389,12 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isDestructive ? const Color(0xFFE53935) : const Color(0xFF1A1D23);
-    final iconBg = isDestructive
-        ? const Color(0xFFFFEBEE)
-        : const Color(0xFFEEF3FF);
-    final iconColor = isDestructive ? const Color(0xFFE53935) : const Color(0xFF3D7BFF);
+    final color =
+        isDestructive ? const Color(0xFFE53935) : const Color(0xFF1A1D23);
+    final iconBg =
+        isDestructive ? const Color(0xFFFFEBEE) : const Color(0xFFEEF3FF);
+    final iconColor =
+        isDestructive ? const Color(0xFFE53935) : const Color(0xFF3D7BFF);
 
     return Column(
       children: [

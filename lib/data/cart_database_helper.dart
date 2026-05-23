@@ -17,18 +17,25 @@ class CartDatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, fileName);
 
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    return await openDatabase(path, version: 2, onCreate: _createDB, onUpgrade: _onUpgrade);
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE cart_items ADD COLUMN categoryId TEXT NOT NULL DEFAULT ""');
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
     await db.execute('''
       CREATE TABLE cart_items (
-        id         TEXT PRIMARY KEY,
-        name       TEXT NOT NULL,
-        price      REAL NOT NULL,
-        image      TEXT NOT NULL,
-        rating     REAL,
-        quantity   INTEGER NOT NULL DEFAULT 1
+        id          TEXT PRIMARY KEY,
+        name        TEXT NOT NULL,
+        price       REAL NOT NULL,
+        image       TEXT NOT NULL,
+        categoryId  TEXT NOT NULL,
+        rating      REAL,
+        quantity    INTEGER NOT NULL DEFAULT 1
       )
     ''');
   }
@@ -44,14 +51,18 @@ class CartDatabaseHelper {
     required String categoryId,
   }) async {
     final db = await database;
-    await db.insert('cart_items', {
-      'id': id,
-      'name': name,
-      'price': price,
-      'image': image,
-      'rating': rating,
-      'quantity': quantity,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert(
+        'cart_items',
+        {
+          'id': id,
+          'name': name,
+          'price': price,
+          'image': image,
+          'categoryId': categoryId,
+          'rating': rating,
+          'quantity': quantity,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   // ── UPDATE QUANTITY ONLY ────────────────────────────────────────────────────
