@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class ExpandableText extends StatefulWidget {
@@ -23,8 +22,7 @@ class _ExpandableTextState extends State<ExpandableText> {
         Text(
           widget.text,
           maxLines: _isExpanded ? null : 3,
-          overflow:
-          _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+          overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
           style: theme.textTheme.bodyMedium?.copyWith(
             height: 1.6,
             fontSize: 15,

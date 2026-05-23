@@ -2,16 +2,25 @@ import 'package:e_commerce/providers/auth_provider.dart';
 import 'package:e_commerce/providers/cart_provider.dart';
 import 'package:e_commerce/providers/navigation_viewmodel.dart';
 import 'package:e_commerce/screen/auth/auth_gate.dart';
-import 'package:e_commerce/screen/main_navigation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
-   await Supabase.initialize(
-         url: 'https://kdudyqnqoisngtyklixj.supabase.co',
-          anonKey: 'sb_publishable_Yh95ta_K8Yi-Q4iG9badtQ_VVhfvqlr',
-      );
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+
+    // Warm up SharedPreferences before Supabase
+    await SharedPreferences.getInstance();
+
+    await Supabase.initialize(
+      url: 'https://kdudyqnqoisngtyklixj.supabase.co',
+      anonKey: 'sb_publishable_Yh95ta_K8Yi-Q4iG9badtQ_VVhfvqlr',
+    );
+  } catch (e) {
+    debugPrint('Initialization error: $e');
+  }
 
   runApp(
     MultiProvider(

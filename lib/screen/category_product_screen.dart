@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../data/repositories/product_data.dart';
 import '../../widget/product _grid_view.dart';
-import '../widget/product _grid_view.dart';
 
 class CategoryProductsScreen extends StatelessWidget {
   final String categoryId;
@@ -16,7 +15,6 @@ class CategoryProductsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     /// Filter products by category
     final filteredProducts = categoryId == "all"
         ? products
@@ -26,7 +24,6 @@ class CategoryProductsScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(title),
       ),
-
       body: SingleChildScrollView(
         child: ProductGridView(products: filteredProducts),
       ),
