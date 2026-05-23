@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart';
-
-import '../providers/cart_provider.dart';
-import '../services/supabase_auth_service.dart';
-import '../services/supabase_images.dart';
+import '../../../data/cart_database_helper.dart';
+import '../services/phone_pay_service.dart';
+import '../widget/cart_item_card.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -14,344 +11,186 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final Razorpay _razorpay = Razorpay();
-  bool isPaymentLoading = false;
+  List<Map<String, dynamic>> cartItems = [];
+  bool isLoading = true;
+  bool _isPaymentLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _initializeRazorpay();
-    // Ensure cart is loaded from DB
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CartProvider>().loadCart();
-    });
+    loadCart();
   }
 
-  // ─────────────────────────────────────────────
-  // RAZORPAY INITIALIZE
-  // ─────────────────────────────────────────────
-
-  void _initializeRazorpay() {
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
-  }
-
-  // ─────────────────────────────────────────────
-  // PAYMENT SUCCESS
-  // ─────────────────────────────────────────────
-
-  Future<void> _handlePaymentSuccess(PaymentSuccessResponse response) async {
-    if (!mounted) return;
-
+  Future<void> loadCart() async {
+    final data = await CartDatabaseHelper.instance.fetchAllItems();
     setState(() {
-      isPaymentLoading = false;
+      cartItems = data;
+      isLoading = false;
     });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Payment Successful! ID: ${response.paymentId}'),
-        backgroundColor: Colors.green,
-      ),
-    );
-
-    await context.read<CartProvider>().clear();
   }
 
-  // ─────────────────────────────────────────────
-  // PAYMENT ERROR
-  // ─────────────────────────────────────────────
-
-  void _handlePaymentError(PaymentFailureResponse response) {
-    if (!mounted) return;
-
-    setState(() {
-      isPaymentLoading = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(response.message ?? 'Payment Failed'),
-        backgroundColor: Colors.red,
-      ),
-    );
+  Future<void> increment(Map<String, dynamic> item) async {
+    await CartDatabaseHelper.instance.updateQuantity(item['id'], item['quantity'] + 1);
+    loadCart();
   }
 
-  // ─────────────────────────────────────────────
-  // EXTERNAL WALLET
-  // ─────────────────────────────────────────────
-
-  void _handleExternalWallet(ExternalWalletResponse response) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Opening ${response.walletName}')),
-    );
-  }
-
-  // ─────────────────────────────────────────────
-  // OPEN PAYMENT
-  // ─────────────────────────────────────────────
-
-  void _processPayment(CartProvider cart) {
-    if (cart.totalPrice <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cart is empty')),
-      );
-      return;
+  Future<void> decrement(Map<String, dynamic> item) async {
+    int qty = item['quantity'];
+    if (qty <= 1) {
+      await CartDatabaseHelper.instance.deleteItem(item['id']);
+    } else {
+      await CartDatabaseHelper.instance.updateQuantity(item['id'], qty - 1);
     }
+    loadCart();
+  }
 
-    setState(() {
-      isPaymentLoading = true;
-    });
+  Future<void> deleteItem(String id) async {
+    await CartDatabaseHelper.instance.deleteItem(id);
+    loadCart();
+  }
 
-    final authService = SupabaseAuthService();
+  Future<void> clearCart() async {
+    await CartDatabaseHelper.instance.clearAll();
+    loadCart();
+  }
 
-    final options = {
-      'key': 'rzp_test_Ss2b3toLNSblG9',
-      'amount': (cart.totalPrice * 100).toInt(),
-      'name': 'E-Commerce Store',
-      'description': 'Order payment - ${cart.totalItems} items',
-      'prefill': {
-        'contact': '9999999999',
-        'email': authService.userEmail,
-      },
-      'method': {
-        'upi': true,
-        'card': true,
-        'wallet': true,
-        'netbanking': true,
-      },
-      'theme': {
-        'color': '#3399cc',
-      },
-    };
+  double get totalPrice {
+    return cartItems.fold(0, (sum, item) => sum + item['price'] * item['quantity']);
+  }
 
-    try {
-      _razorpay.open(options);
-    } catch (e) {
-      if (!mounted) return;
+  int get totalItems {
+    return cartItems.fold(0, (sum, item) => sum + (item['quantity'] as int));
+  }
 
-      setState(() {
-        isPaymentLoading = false;
-      });
+  // ─── PAY ──────────────────────────────────────────────────────────────────
+  Future<void> _handlePayment() async {
+    setState(() => _isPaymentLoading = true);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Payment Error: $e'),
-          backgroundColor: Colors.red,
+    final result = await PhonePePaymentService.instance.startPayment(
+      context: context,
+      amountInRupees: totalPrice,
+      userId: 'USER_001', // replace with your actual logged-in user ID
+    );
+
+    setState(() => _isPaymentLoading = false);
+
+    if (!mounted) return;
+
+    if (result['success'] == true) {
+      // ✅ Payment succeeded — clear cart and show success
+      await clearCart();
+      _showResultDialog(
+        success: true,
+        title: 'Payment Successful!',
+        message: 'Transaction ID: ${result['transactionId']}',
+      );
+    } else {
+      // ❌ Payment failed or cancelled
+      _showResultDialog(
+        success: false,
+        title: 'Payment Failed',
+        message: result['message'] ?? 'Something went wrong. Please try again.',
+      );
+    }
+  }
+
+  void _showResultDialog({
+    required bool success,
+    required String title,
+    required String message,
+  }) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        icon: Icon(
+          success ? Icons.check_circle_rounded : Icons.error_rounded,
+          color: success ? Colors.green : Colors.red,
+          size: 48,
         ),
-      );
-    }
+        title: Text(title, textAlign: TextAlign.center),
+        content: Text(message, textAlign: TextAlign.center),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
-
-  @override
-  void dispose() {
-    _razorpay.clear();
-    super.dispose();
-  }
+  // ──────────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    if (isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (cartItems.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("My Cart")),
+        body: const Center(child: Text("Your cart is empty")),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Cart'),
+        title: const Text("My Cart"),
         centerTitle: true,
         actions: [
-          TextButton(
-            onPressed: () => context.read<CartProvider>().clear(),
-            child: const Text('Clear All'),
-          ),
+          TextButton(onPressed: clearCart, child: const Text("Clear All")),
         ],
       ),
-      body: Consumer<CartProvider>(
-        builder: (context, cart, child) {
-          if (cart.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (cart.items.isEmpty) {
-            return const Center(child: Text('Your cart is empty'));
-          }
-
-          return Column(
-            children: [
-              // CART ITEMS
-              Expanded(
-                child: ListView.builder(
-                  itemCount: cart.items.length,
-                  padding: const EdgeInsets.all(16),
-                  itemBuilder: (context, index) {
-                    final cartItem = cart.items[index];
-
-                    return _CartItemCard(
-                      cartItem: cartItem,
-                      onAdd: () => cart.incrementQuantity(cartItem.product.id),
-                      onRemove: () => cart.decrementQuantity(cartItem.product.id),
-                      onDelete: () => cart.removeFromCart(cartItem.product.id),
-                    );
-                  },
-                ),
-              ),
-
-              // PAYMENT SUMMARY
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(25),
-                      blurRadius: 12,
-                      offset: const Offset(0, -4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    _buildRow('Items', '${cart.totalItems}'),
-                    _buildRow('Subtotal', '₹${cart.totalPrice.toStringAsFixed(2)}'),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 54,
-                      child: ElevatedButton(
-                        onPressed: isPaymentLoading ? null : () => _processPayment(cart),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          disabledBackgroundColor: Colors.grey,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: isPaymentLoading
-                            ? const SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                            : Text(
-                                'Pay ₹${cart.totalPrice.toStringAsFixed(2)}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: Column(
         children: [
-          Text(label),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// CART ITEM CARD
-// ─────────────────────────────────────────────
-
-class _CartItemCard extends StatelessWidget {
-  final CartItem cartItem;
-
-  final VoidCallback onAdd;
-  final VoidCallback onRemove;
-  final VoidCallback onDelete;
-
-  const _CartItemCard({
-    required this.cartItem,
-    required this.onAdd,
-    required this.onRemove,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final product = cartItem.product;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          // PRODUCT IMAGE
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: SupabaseImage(
-              imageName: product.image,
-              width: 80,
-              height: 80,
-              fit: BoxFit.cover,
+          Expanded(
+            child: ListView.builder(
+              itemCount: cartItems.length,
+              padding: const EdgeInsets.all(16),
+              itemBuilder: (context, index) {
+                final item = cartItems[index];
+                return CartItemCard(
+                  item: item,
+                  onAdd: () => increment(item),
+                  onRemove: () => decrement(item),
+                  onDelete: () => deleteItem(item['id']),
+                );
+              },
             ),
           ),
-
-          const SizedBox(width: 12),
-
-          // PRODUCT DETAILS
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08), // fixed: was withAlpha(255) which is full black
+                  blurRadius: 12,
+                  offset: const Offset(0, -4),
                 ),
-                const SizedBox(height: 4),
-                Text('₹${product.price}'),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    IconButton(
-                      onPressed: onRemove,
-                      icon: const Icon(Icons.remove),
-                    ),
-                    Text('${cartItem.quantity}'),
-                    IconButton(
-                      onPressed: onAdd,
-                      icon: const Icon(Icons.add),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: onDelete,
-                      icon: const Icon(Icons.delete),
-                    ),
-                  ],
+              ],
+            ),
+            child: Column(
+              children: [
+                _row("Items", "$totalItems"),
+                _row("Subtotal", "₹${totalPrice.toStringAsFixed(2)}"),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _isPaymentLoading ? null : _handlePayment,
+                    child: _isPaymentLoading
+                        ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    )
+                        : const Text("Proceed To Payment"),
+                  ),
                 ),
               ],
             ),
@@ -360,25 +199,17 @@ class _CartItemCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _row(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

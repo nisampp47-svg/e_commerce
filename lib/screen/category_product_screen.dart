@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../data/repositories/product_data.dart';
-import '../../widget/product _grid_view.dart';
+import '../../widget/product_grid_view.dart';
 
 class CategoryProductsScreen extends StatelessWidget {
   final String categoryId;

@@ -6,7 +6,7 @@ plugins {
 android {
     namespace = "com.example.e_commerce"
 
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -28,14 +28,6 @@ android {
         release {
             signingConfig = signingConfigs.getByName("debug")
         }
-    }
-
-    configurations.all {
-        resolutionStrategy {
-            force("com.razorpay:checkout:1.6.40")
-        }
-        exclude(group = "com.razorpay", module = "standard-core")
-        exclude(group = "com.razorpay", module = "core")
     }
 }
 

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../data/repositories/category_data.dart';
 import '../../../data/repositories/product_data.dart';
 import '../../../model/category_model.dart';
-import '../../widget/product _grid_view.dart';
+import '../../widget/product_grid_view.dart';
 import '../../widget/search_bar.dart';
 
 class CatalogScreen extends StatefulWidget {

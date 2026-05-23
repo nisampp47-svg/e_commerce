@@ -17,10 +17,12 @@ dependencies:
   google_fonts:
   shimmer:
   cached_network_image:
-  shared_preferences:
   url_launcher:
-  razorpay_flutter:
   cupertino_icons:
+  phonepe_payment_sdk:
+  http:
+  crypto:
+  uuid:
 
 dev_dependencies:
   flutter_test:
