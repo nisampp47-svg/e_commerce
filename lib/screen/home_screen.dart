@@ -1,199 +1,235 @@
-
-import 'package:e_commerce/screen/product_screen.dart';
+import 'package:e_commerce/core/app_constants.dart';
+import 'package:e_commerce/main.dart';
 import 'package:flutter/material.dart';
-import '../../../data/repositories/category_data.dart';
-import '../../../data/repositories/product_data.dart';
-import '../../../model/category_model.dart';
-import '../../widget/category_icons.dart';
-import '../../widget/home_banner.dart';
-import '../../widget/populer_item_card.dart';
-import '../../widget/product_card.dart';
-import '../../widget/search_bar.dart';
-import '../../widget/shimmer_title.dart';
-import '../model/product_model.dart';
-import 'category_product_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:e_commerce/data/repositories/category_data.dart';
+import 'package:e_commerce/data/repositories/product_data.dart';
+import 'package:e_commerce/model/category_model.dart';
+import 'package:e_commerce/widget/category_icons.dart';
+import 'package:e_commerce/widget/home_banner.dart';
+import 'package:e_commerce/widget/populer_item_card.dart';
+import 'package:e_commerce/widget/product_card.dart';
+import 'package:e_commerce/widget/search_bar.dart';
+import 'package:e_commerce/model/product_model.dart';
 
 class MyHomeScreen extends StatefulWidget {
-  const MyHomeScreen({
-    super.key,
-    required List<dynamic> categories,
-    required List<ProductModel> products,
-  });
+  const MyHomeScreen({super.key});
 
   @override
   State<MyHomeScreen> createState() => _MyHomeScreenState();
 }
 
 class _MyHomeScreenState extends State<MyHomeScreen> {
+  final List<CategoryModel> categories = dummyCategories;
+  String selectedCategoryId = "all";
 
-  late final List<CategoryModel> categories = dummyCategories;
+  // ── helpers ───────────────────────────────────────────────────────────────
 
-  String selectedCategory = "all";
+  List<ProductModel> get _filteredProducts => selectedCategoryId == "all"
+      ? products
+      : products.where((p) => p.categoryId == selectedCategoryId).toList();
+
+  List<ProductModel> get _recommendedProducts =>
+      _filteredProducts.where((p) => p.isRecommended).toList();
+
+  String get _sectionTitle {
+    if (selectedCategoryId == "all") return "Recommended for You";
+    final category = categories.firstWhere(
+          (c) => c.categoryId == selectedCategoryId,
+      orElse: () => categories.first,
+    );
+    return "Results for ${category.categoryTitle}";
+  }
+
+  Widget _buildSectionHeader(
+      BuildContext context, {
+        required String title,
+        VoidCallback? onSeeAll,
+      }) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: AppPadding.horizontalPadding,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          if (onSeeAll != null)
+            TextButton(onPressed: onSeeAll, child: const Text("See All")),
+        ],
+      ),
+    );
+  }
+
+  // ── theme toggle (extracted to avoid AppBar rebuild lag) ──────────────────
+
+  Widget _buildThemeToggle() {
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (_, mode, __) {
+        final isDark = mode == ThemeMode.dark;
+        return IconButton(
+          icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+          onPressed: () {
+            // Direct update is faster and prevents the "freeze"
+            themeNotifier.value = isDark ? ThemeMode.light : ThemeMode.dark;
+          },
+        );
+      },
+    );
+  }
+
+  // ── build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final recommendedProducts = products.where((p) => p.isRecommended).toList();
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
+        centerTitle: false,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              Icons.location_on_outlined,
-              color: Colors.green,
+            Text(
+              "Location",
+              style: theme.textTheme.labelSmall
+                  ?.copyWith(color: theme.colorScheme.primary),
             ),
-            SizedBox(width: 4), // small gap
-            ShimmerText(text: "Get Faster Delivery ", fontSize: 18, color: Colors.black87,)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.location_on,
+                    size: 16, color: theme.colorScheme.primary),
+                const SizedBox(width: 4),
+                const Text(
+                  "New York, USA",
+                  style:
+                  TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
           ],
         ),
+        actions: [
+          _buildThemeToggle(), // ✓ extracted — only this widget rebuilds on toggle
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.notifications_none),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
-      backgroundColor: Colors.grey[100],
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 10),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Search
+            const Padding(
+              padding: AppPadding.screenPadding,
+              child: MySearchBar(icon: Icons.tune),
+            ),
 
-              /// 🔍 Search Bar
-              const MySearchBar(icon: Icons.notification_add_outlined),
+            // Banner
+            const HomeBanner(),
 
-              const SizedBox(height: 30),
+            const SizedBox(height: AppPadding.large),
 
-              /// 🪑 Categories Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Categories",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+            // Categories header
+            _buildSectionHeader(
+              context,
+              title: "Categories",
+              onSeeAll: () => context.pushNamed('catalog'),
+            ),
 
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedCategory = "all";
-                      });
-                    },
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const CategoryProductsScreen(
-                              categoryId: "all",
-                              title: "All Products",
-                            ),
-                          ),
-                        );
-                      },
-                      child: const Text(
-                        "See All",
-                        style: TextStyle(
-                          color: Colors.deepPurple,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+            const SizedBox(height: AppPadding.small),
+
+            // Categories list
+            SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppPadding.medium),
+                itemCount: categories.length,
+                itemBuilder: (context, index) {
+                  final category = categories[index];
+                  return CategoryIcons(
+                    category: category,
+                    isSelected: selectedCategoryId == category.categoryId,
+                    onTap: () => setState(
+                            () => selectedCategoryId = category.categoryId),
+                  );
+                },
               ),
+            ),
 
-              const SizedBox(height: 30),
+            const SizedBox(height: AppPadding.large),
 
-              /// 🎯 Full Width Categories
-              Row(
-                children: List.generate(
-                  categories.length-1,
-                      (index) => CategoryIcons(
-                    category: categories[index],
-                    onTap: () {
-                      setState(() {
-                        Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            transitionDuration: const Duration(milliseconds: 600),
-                            pageBuilder: (_, animation, secondaryAnimation) =>
-                            CategoryProductsScreen(categoryId: categories[index].categoryId, title: categories[index].categoryTitle),
-                            transitionsBuilder: (_, animation, secondaryAnimation, child) {
-                              return child; // no fade, only Hero animates
-                            },
-                          ),
-                        );
-                      });
-                    },
-                  ),
-                ),
-              ),
+            // Recommended header
+            _buildSectionHeader(context, title: _sectionTitle),
 
-              const SizedBox(height: 30),
+            const SizedBox(height: AppPadding.medium),
 
-              HomeBanner(),
-              const SizedBox(height: 30),
-
-              /// ⭐ Recommended Section
-              const Text(
-                "Recommended for You",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-
-              const SizedBox(height: 30),
-
-              SizedBox(
-                height: 320,
-                child: ListView.builder(
-
-                  scrollDirection: Axis.horizontal,
-                  itemCount: recommendedProducts.length,
-                  // ... inside MyHomeScreen ListView.builder
-                  itemBuilder: (context, index) {
-                    final product = recommendedProducts[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 16),
+            // Recommended horizontal list
+            SizedBox(
+              height: 300,
+              child: ListView.builder(
+                key: ValueKey('recommended_$selectedCategoryId'), // ✓ rebuilds on category change
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppPadding.medium),
+                itemCount: _recommendedProducts.length,
+                itemBuilder: (context, index) {
+                  final product = _recommendedProducts[index];
+                  return Padding(
+                    padding:
+                    const EdgeInsets.only(right: AppPadding.medium),
+                    child: SizedBox(
+                      width: 180,
                       child: ProductListCard(
                         product: product,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ProductHeroScreen(product: product,), // Navigate to your hero screen
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              const Text(
-                "Popular Now",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 16),
-              Column(
-                children: products.take(4).map((product) {
-                  return PopularItemCard(
-                    product: product,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ProductHeroScreen(product: product),
+                        onTap: () => context.pushNamed(
+                          'product_detail',
+                          pathParameters: {'id': product.id},
+                          extra: product,
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   );
-                }).toList(),
+                },
               ),
-            ],
-          ),
+            ),
+
+            const SizedBox(height: AppPadding.large),
+
+            // Popular items header
+            _buildSectionHeader(context, title: "Popular Items"),
+
+            // Popular items vertical list
+            // ✓ fix: key forces full rebuild when category changes
+            ListView.builder(
+              key: ValueKey('popular_$selectedCategoryId'),
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: AppPadding.screenPadding,
+              itemCount: _filteredProducts.length.clamp(0, 4),
+              itemBuilder: (context, index) {
+                final product = _filteredProducts[index];
+                return PopularItemCard(
+                  product: product,
+                  onTap: () => context.pushNamed(
+                    'product_detail',
+                    pathParameters: {'id': product.id},
+                    extra: product,
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );

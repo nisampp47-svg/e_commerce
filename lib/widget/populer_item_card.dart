@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../model/product_model.dart';
 import '../services/supabase_images.dart';
 
@@ -15,40 +14,37 @@ class PopularItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Wrap the entire card in a GestureDetector
+    final theme = Theme.of(context);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF4F4F4),
+          color: theme.colorScheme.surfaceContainerLow, // ✓ theme-aware
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(10),
+              color: theme.shadowColor.withAlpha(20),   // ✓ theme-aware
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
           ],
         ),
         child: Row(
-          children: [ 
-            /// Product Image 
-            /// Product Image
+          children: [
+            // Product Image — ✓ removed invalid Expanded inside Hero
             SizedBox(
               height: 95,
               width: 95,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(14),
-
                 child: Hero(
                   tag: 'popular_${product.id}',
-                  child: Expanded(
-                    child: SupabaseImage(
-                      imageName: product.image,
-                      fit: BoxFit.cover,
-                    ),
+                  child: SupabaseImage(
+                    imageName: product.image,
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),
@@ -56,51 +52,50 @@ class PopularItemCard extends StatelessWidget {
 
             const SizedBox(width: 16),
 
-            /// Text Section
+            // Text section
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     product.name,
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     "Category: ${product.categoryId}",
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF8E8E8E),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant, // ✓ theme-aware
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     "\$${product.price.toStringAsFixed(2)}",
-                    style: const TextStyle(
-                      fontSize: 15,
+                    style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: Colors.blue,
+                      color: theme.colorScheme.primary, // ✓ theme-aware
                     ),
                   ),
                 ],
               ),
             ),
 
-            /// Arrow Button
+            // Arrow button
             Container(
               height: 36,
               width: 36,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Color(0xFFE9E9E9),
+                color: theme.colorScheme.surfaceContainerHighest, // ✓ theme-aware
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 16,
-                color: Color(0xFF7A7A7A),
+                color: theme.colorScheme.onSurfaceVariant, // ✓ theme-aware
               ),
             ),
           ],

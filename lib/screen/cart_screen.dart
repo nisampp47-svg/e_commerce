@@ -1,4 +1,6 @@
+import 'package:e_commerce/core/app_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../data/cart_database_helper.dart';
 import '../services/phone_pay_service.dart';
 import '../widget/cart_item_card.dart';
@@ -101,7 +103,7 @@ class _CartScreenState extends State<CartScreen> {
   }) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         icon: Icon(
           success ? Icons.check_circle_rounded : Icons.error_rounded,
           color: success ? Colors.green : Colors.red,
@@ -111,7 +113,7 @@ class _CartScreenState extends State<CartScreen> {
         content: Text(message, textAlign: TextAlign.center),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: const Text('OK'),
           ),
         ],
@@ -131,7 +133,23 @@ class _CartScreenState extends State<CartScreen> {
     if (cartItems.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: const Text("My Cart")),
-        body: const Center(child: Text("Your cart is empty")),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.shopping_cart_outlined, size: 100, color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+              const SizedBox(height: 24),
+              Text("Your cart is empty", style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text("Looks like you haven't added anything yet."),
+              const SizedBox(height: 32),
+              FilledButton(
+                onPressed: () => context.go('/'),
+                child: const Text("Start Shopping"),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
@@ -140,7 +158,11 @@ class _CartScreenState extends State<CartScreen> {
         title: const Text("My Cart"),
         centerTitle: true,
         actions: [
-          TextButton(onPressed: clearCart, child: const Text("Clear All")),
+          IconButton(
+            onPressed: clearCart,
+            icon: const Icon(Icons.delete_sweep_outlined),
+            tooltip: "Clear All",
+          ),
         ],
       ),
       body: Column(
@@ -148,7 +170,7 @@ class _CartScreenState extends State<CartScreen> {
           Expanded(
             child: ListView.builder(
               itemCount: cartItems.length,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppPadding.medium),
               itemBuilder: (context, index) {
                 final item = cartItems[index];
                 return CartItemCard(
@@ -161,38 +183,48 @@ class _CartScreenState extends State<CartScreen> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppPadding.large),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08), // fixed: was withAlpha(255) which is full black
-                  blurRadius: 12,
-                  offset: const Offset(0, -4),
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
                 ),
               ],
             ),
-            child: Column(
-              children: [
-                _row("Items", "$totalItems"),
-                _row("Subtotal", "₹${totalPrice.toStringAsFixed(2)}"),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: _isPaymentLoading ? null : _handlePayment,
-                    child: _isPaymentLoading
-                        ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2.5),
-                    )
-                        : const Text("Proceed To Payment"),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _row("Items", "$totalItems"),
+                  _row("Subtotal", "₹${totalPrice.toStringAsFixed(2)}"),
+                  const Divider(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Total", style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                      Text("₹${totalPrice.toStringAsFixed(2)}", style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: FilledButton(
+                      onPressed: _isPaymentLoading ? null : _handlePayment,
+                      style: FilledButton.styleFrom(
+                        shape: RoundedRectangleBorder(borderRadius: AppRadius.mediumBorderRadius),
+                      ),
+                      child: _isPaymentLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text("Proceed To Checkout"),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

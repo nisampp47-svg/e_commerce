@@ -1,10 +1,9 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../../data/repositories/category_data.dart';
-import '../../../data/repositories/product_data.dart';
-import '../../../model/category_model.dart';
-import '../../widget/product_grid_view.dart';
-import '../../widget/search_bar.dart';
+import 'package:e_commerce/data/repositories/category_data.dart';
+import 'package:e_commerce/data/repositories/product_data.dart';
+import 'package:e_commerce/model/category_model.dart';
+import 'package:e_commerce/widget/product_grid_view.dart';
+import 'package:e_commerce/widget/search_bar.dart';
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
@@ -43,10 +42,11 @@ class _CatalogScreenState extends State<CatalogScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F5F2),
       extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar(theme),
       body: SafeArea(
         child: FadeTransition(
           opacity: _headerFadeAnim,
@@ -59,12 +59,10 @@ class _CatalogScreenState extends State<CatalogScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeader(),
+                      _buildHeader(theme),
                       const SizedBox(height: 20),
-                      MySearchBar(icon: Icons.qr_code_scanner_rounded),
+                      const MySearchBar(icon: Icons.qr_code_scanner_rounded),
                       const SizedBox(height: 24),
-                      const SizedBox(height: 8),
-                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
@@ -83,36 +81,22 @@ class _CatalogScreenState extends State<CatalogScreen>
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(ThemeData theme) {
     return AppBar(
       elevation: 0,
-      backgroundColor: const Color(0xFFF7F5F2).withAlpha(85),
+      scrolledUnderElevation: 2,
+      backgroundColor: Colors.transparent,
       centerTitle: true,
-      title: const Text(
+      title: Text(
         'Catalog',
-        style: TextStyle(
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF1A1A1A),
-          letterSpacing: 0.3,
-        ),
-      ),
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16),
-
-        ),
-      ],
-      flexibleSpace: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 20),
-          child: Container(color: Colors.transparent),
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ThemeData theme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -122,10 +106,8 @@ class _CatalogScreenState extends State<CatalogScreen>
           children: [
             Text(
               'Discover',
-              style: TextStyle(
-                fontSize: 30,
+              style: theme.textTheme.headlineLarge?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: const Color(0xFF1A1A1A),
                 letterSpacing: -0.5,
                 height: 1.1,
               ),
@@ -133,19 +115,14 @@ class _CatalogScreenState extends State<CatalogScreen>
             const SizedBox(height: 4),
             Text(
               '${products.length} products available',
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF888580),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ],
         ),
-
       ],
     );
   }
 }
-
-
-

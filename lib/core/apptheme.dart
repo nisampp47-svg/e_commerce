@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'theme_constants.dart';
-import 'theme_constants.dart';
 
 class AppThemes {
   // Light ThemeData
@@ -8,11 +7,15 @@ class AppThemes {
     return ThemeData(
       brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.lightBackground,
-      colorScheme: const ColorScheme.light(
+      colorScheme: ColorScheme.light(
         primary: AppColors.lightPrimary,
         surface: AppColors.lightSurface,
+        surfaceContainerLow: const Color(0xFFF4F4F4), // ✓ PopularItemCard bg
+        surfaceContainerHighest: const Color(0xFFE9E9E9), // ✓ arrow circle bg
+        onSurfaceVariant: const Color(0xFF8E8E8E), // ✓ subtitle & icon color
+        shadow: Colors.black,
       ),
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
         headlineLarge: AppTypography.headline,
         bodyLarge: AppTypography.bodyPrimary,
         bodyMedium: AppTypography.bodySecondary,
@@ -28,11 +31,15 @@ class AppThemes {
     return ThemeData(
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.darkBackground,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: ColorScheme.dark(
         primary: AppColors.darkPrimary,
         surface: AppColors.darkSurface,
+        surfaceContainerLow: const Color(0xFF2A2A2A), // ✓ dark card bg
+        surfaceContainerHighest: const Color(0xFF3A3A3A), // ✓ dark arrow circle
+        onSurfaceVariant: const Color(0xFF9E9E9E), // ✓ dark subtitle
+        shadow: Colors.black,
       ),
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
         headlineLarge: AppTypography.headline,
         bodyLarge: AppTypography.bodyPrimary,
         bodyMedium: AppTypography.bodySecondary,

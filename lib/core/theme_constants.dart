@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// 1. Unified Color Scheme
 class AppColors {
@@ -19,24 +20,21 @@ class AppColors {
 
 /// 2. Typography System
 class AppTypography {
-  static const String fontFamily = 'Roboto'; // Replace with your font
+  static String get fontFamily => GoogleFonts.poppins().fontFamily!; 
 
-  static const TextStyle headline = TextStyle(
-    fontFamily: fontFamily,
+  static TextStyle get headline => GoogleFonts.poppins(
     fontSize: 24,
     fontWeight: FontWeight.bold,
     letterSpacing: 0.15,
   );
 
-  static const TextStyle bodyPrimary = TextStyle(
-    fontFamily: fontFamily,
+  static TextStyle get bodyPrimary => GoogleFonts.poppins(
     fontSize: 16,
     fontWeight: FontWeight.normal,
     letterSpacing: 0.5,
   );
 
-  static const TextStyle bodySecondary = TextStyle(
-    fontFamily: fontFamily,
+  static TextStyle get bodySecondary => GoogleFonts.poppins(
     fontSize: 14,
     fontWeight: FontWeight.normal,
     letterSpacing: 0.25,

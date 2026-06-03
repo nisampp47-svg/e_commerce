@@ -6,6 +6,8 @@ class SupabaseAuthService {
   /// Get current session and user
   User? get currentUser => _supabase.auth.currentUser;
 
+  Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
+
   String get userName => currentUser?.userMetadata?['name'] ?? "No Name";
 
   String get userEmail => currentUser?.email ?? "";

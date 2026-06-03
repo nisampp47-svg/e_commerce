@@ -1,5 +1,8 @@
-import 'package:e_commerce/services/supabase_auth_service.dart';
+import 'package:e_commerce/core/app_constants.dart';
+import 'package:e_commerce/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -9,439 +12,136 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _isEditingName = false;
+  final bool _isEditingName = false;
   late TextEditingController _nameController;
-  late TextEditingController _emailController;
-  final SupabaseAuthService _authService = SupabaseAuthService();
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(
-      text: _authService.userName,
-    );
-    _emailController = TextEditingController(
-      text: _authService.userEmail,
-    );
+    final authController = Provider.of<AuthController>(context, listen: false);
+    _nameController = TextEditingController(text: authController.user?.email?.split('@').first ?? "User");
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF2F4F7),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildAppBar(),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 24),
-                    _buildProfileHeader(),
-                    const SizedBox(height: 24),
-                    _buildMenuSection(),
-                    const SizedBox(height: 32),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    final theme = Theme.of(context);
+    final authController = Provider.of<AuthController>(context);
 
-  Widget _buildAppBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _IconButton(
-            icon: Icons.chevron_left_rounded,
-            onTap: () {},
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            title: const Text("Profile"),
+            actions: [
+              IconButton(
+                onPressed: () {}, // Go to settings
+                icon: const Icon(Icons.settings_outlined),
+              ),
+            ],
           ),
-          const Text(
-            'Profile',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1A1D23),
-              letterSpacing: -0.3,
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                const SizedBox(height: 24),
+                _buildProfileHeader(theme, authController),
+                const SizedBox(height: 32),
+                _buildMenuSection(context),
+                const SizedBox(height: 32),
+              ],
             ),
-          ),
-          _IconButton(
-            icon: Icons.settings_outlined,
-            onTap: () {},
           ),
         ],
       ),
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget _buildProfileHeader(ThemeData theme, AuthController auth) {
     return Column(
       children: [
-        // Avatar with edit button
         Stack(
           children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(10),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: ClipOval(
-                child: Image.network(
-                  'https://i.pravatar.cc/200?img=11',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.person,
-                    size: 52,
-                    color: Color(0xFFB0BAC9),
-                  ),
-                ),
-              ),
+            CircleAvatar(
+              radius: 60,
+              backgroundColor: theme.colorScheme.primaryContainer,
+              child: Icon(Icons.person, size: 60, color: theme.colorScheme.primary),
             ),
             Positioned(
-              bottom: 2,
-              right: 2,
-              child: GestureDetector(
-                onTap: () {
-                  // Handle avatar edit
-                },
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFF3D7BFF),
-                  ),
-                  child: const Icon(
-                    Icons.edit,
-                    color: Colors.white,
-                    size: 14,
-                  ),
+              bottom: 0,
+              right: 0,
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: theme.colorScheme.primary,
+                child: IconButton(
+                  icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                  onPressed: () {},
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 14),
-
-        // Name (editable)
-        GestureDetector(
-          onTap: () {
-            setState(() => _isEditingName = true);
-          },
-          child: _isEditingName
-              ? SizedBox(
-                  width: 200,
-                  child: TextField(
-                    controller: _nameController,
-                    autofocus: true,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1A1D23),
-                    ),
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      border: UnderlineInputBorder(),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide:
-                            BorderSide(color: Color(0xFF3D7BFF), width: 2),
-                      ),
-                    ),
-                    onTapOutside: (_) => setState(() => _isEditingName = false),
-                  ),
-                )
-              : Text(
-                  _nameController.text,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1A1D23),
-                    letterSpacing: -0.4,
-                  ),
-                ),
-        ),
-        const SizedBox(height: 4),
-
-        // Email
+        const SizedBox(height: 16),
         Text(
-          _emailController.text,
-          style: const TextStyle(
-            fontSize: 13.5,
-            color: Color(0xFF8B95A5),
-            fontWeight: FontWeight.w400,
-          ),
+          _nameController.text,
+          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 20),
-
-        // Edit Profile Button
-        GestureDetector(
-          onTap: () {
-            setState(() => _isEditingName = true);
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 13),
-            decoration: BoxDecoration(
-              color: const Color(0xFF3D7BFF),
-              borderRadius: BorderRadius.circular(30),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF3D7BFF).withAlpha(35),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: const Text(
-              'Edit Profile',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.2,
-              ),
-            ),
+        Text(
+          auth.user?.email ?? "no-email@example.com",
+          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 24),
+        OutlinedButton(
+          onPressed: () {},
+          style: OutlinedButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.mediumBorderRadius),
           ),
+          child: const Text("Edit Profile"),
         ),
       ],
     );
   }
 
-  Widget _buildMenuSection() {
+  Widget _buildMenuSection(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: AppPadding.horizontalPadding,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionGroup(
-            label: 'SHOPPING ACTIVITY',
-            items: [
-              _MenuItem(
-                icon: Icons.inventory_2_outlined,
-                label: 'My Orders',
-                onTap: () {},
-              ),
-              _MenuItem(
-                icon: Icons.favorite_border_rounded,
-                label: 'Wishlist',
-                onTap: () {},
-                isLast: true,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _buildSectionGroup(
-            label: 'ACCOUNT DETAILS',
-            items: [
-              _MenuItem(
-                icon: Icons.location_on_outlined,
-                label: 'Shipping Addresses',
-                onTap: () {},
-              ),
-              _MenuItem(
-                icon: Icons.credit_card_outlined,
-                label: 'Payment Methods',
-                onTap: () {},
-                isLast: true,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _buildSectionGroup(
-            label: 'SUPPORT & INFO',
-            items: [
-              _MenuItem(
-                icon: Icons.help_outline_rounded,
-                label: 'Help Center',
-                onTap: () {},
-              ),
-              _MenuItem(
-                icon: Icons.privacy_tip_outlined,
-                label: 'Privacy Policy',
-                onTap: () {},
-              ),
-              _MenuItem(
-                icon: Icons.logout_rounded,
-                label: 'Log Out',
-                isLast: true,
-                isDestructive: true,
-                onTap: () async {
-                  await _authService.signOut();
-
-                  if (mounted) {
-                    Navigator.pushReplacementNamed(context, '/login');
-                  }
-                },
-              ),
-            ],
+          _buildMenuTile(Icons.inventory_2_outlined, "My Orders", () {}),
+          _buildMenuTile(Icons.favorite_border, "Wishlist", () {}),
+          _buildMenuTile(Icons.location_on_outlined, "Shipping Addresses", () {}),
+          _buildMenuTile(Icons.credit_card_outlined, "Payment Methods", () {}),
+          _buildMenuTile(Icons.help_outline, "Help Center", () {}),
+          const Divider(height: 32),
+          _buildMenuTile(
+            Icons.logout,
+            "Logout",
+            () async {
+              await Provider.of<AuthController>(context, listen: false).logout();
+              if (context.mounted) context.go('/auth');
+            },
+            isDestructive: true,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSectionGroup({
-    required String label,
-    required List<_MenuItem> items,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 10),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFFB0BAC9),
-              letterSpacing: 1.1,
-            ),
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(05),
-                blurRadius: 12,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Column(children: items),
-        ),
-      ],
-    );
-  }
-}
+  Widget _buildMenuTile(IconData icon, String title, VoidCallback onTap, {bool isDestructive = false}) {
+    final theme = Theme.of(context);
+    final color = isDestructive ? theme.colorScheme.error : theme.colorScheme.onSurface;
 
-// ─── Reusable Widgets ──────────────────────────────────────────────────────────
-
-class _IconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _IconButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(title, style: TextStyle(color: color, fontWeight: FontWeight.w500)),
+      trailing: const Icon(Icons.chevron_right, size: 20),
       onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Icon(icon, size: 22, color: const Color(0xFF1A1D23)),
-      ),
-    );
-  }
-}
-
-class _MenuItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool isLast;
-  final bool isDestructive;
-
-  const _MenuItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.isLast = false,
-    this.isDestructive = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color =
-        isDestructive ? const Color(0xFFE53935) : const Color(0xFF1A1D23);
-    final iconBg =
-        isDestructive ? const Color(0xFFFFEBEE) : const Color(0xFFEEF3FF);
-    final iconColor =
-        isDestructive ? const Color(0xFFE53935) : const Color(0xFF3D7BFF);
-
-    return Column(
-      children: [
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: iconBg,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, size: 19, color: iconColor),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: color,
-                    ),
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 20,
-                  color: const Color(0xFFB0BAC9),
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (!isLast)
-          const Divider(
-            height: 1,
-            indent: 68,
-            endIndent: 0,
-            color: Color(0xFFF0F2F5),
-          ),
-      ],
+      shape: RoundedRectangleBorder(borderRadius: AppRadius.smallBorderRadius),
     );
   }
 }

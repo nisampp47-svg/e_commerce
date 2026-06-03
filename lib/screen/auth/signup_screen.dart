@@ -1,13 +1,13 @@
 import 'dart:ui';
+import 'package:e_commerce/core/app_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../widget/my_button.dart';
 import '../../widget/my_text_field.dart';
-import '../home_screen.dart';
-// Update to your new provider file path if renamed
 
 class SignupScreen extends StatefulWidget {
   final VoidCallback onTap;
@@ -23,9 +23,27 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController confirmPasswordController = TextEditingController();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   bool isPasswordVisible = false;
+  double passwordStrength = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    passwordController.addListener(_checkPasswordStrength);
+  }
+
+  void _checkPasswordStrength() {
+    final password = passwordController.text;
+    double strength = 0;
+    if (password.length >= 6) strength += 0.25;
+    if (password.contains(RegExp(r'[A-Z]'))) strength += 0.25;
+    if (password.contains(RegExp(r'[0-9]'))) strength += 0.25;
+    if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) strength += 0.25;
+    setState(() => passwordStrength = strength);
+  }
 
   @override
   void dispose() {
+    passwordController.removeListener(_checkPasswordStrength);
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
@@ -46,16 +64,13 @@ class _SignupScreenState extends State<SignupScreen> {
     await auth.register(
       emailController.text.trim(),
       passwordController.text.trim(),
-      '', // Passing empty string for name setup as placeholder
+      '',
     );
 
     if (!mounted) return;
 
     if (auth.user != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MyHomeScreen(categories: [], products: [])),
-      );
+      context.go('/');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.errorMessage ?? "Signup failed")),
@@ -66,6 +81,8 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -75,63 +92,47 @@ class _SignupScreenState extends State<SignupScreen> {
               fit: BoxFit.cover,
             ),
           ),
-          Positioned.fill(child: Container(color: Colors.white.withAlpha(115))),
-          Positioned(
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 2, sigmaY: 1),
-              child: Image.asset(
-                'assets/images/green_chair.png',
-                fit: BoxFit.cover,
-                alignment: Alignment.topCenter,
-              ),
-            ),
-          ),
+          Positioned.fill(child: Container(color: Colors.white.withValues(alpha: 0.4))),
           Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(15),
+              padding: const EdgeInsets.all(AppPadding.large),
               child: Column(
                 children: [
                   Text(
                     "LUXE",
                     style: GoogleFonts.playfairDisplay(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 2,
-                      color: Colors.brown.shade600,
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 4,
+                      color: Colors.brown.shade800,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 32),
                   Form(
                     key: formKey,
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: AppRadius.largeBorderRadius,
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: Container(
-                          width: 450,
-                          padding: const EdgeInsets.all(24),
+                          constraints: const BoxConstraints(maxWidth: 400),
+                          padding: const EdgeInsets.all(AppPadding.large),
                           decoration: BoxDecoration(
-                            color: Colors.white.withAlpha(80),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: Colors.white.withAlpha(55)),
-                            boxShadow: [
-                              BoxShadow(
-                                blurRadius: 20,
-                                color: Colors.black.withAlpha(50),
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
+                            color: Colors.white.withValues(alpha: 0.8),
+                            borderRadius: AppRadius.largeBorderRadius,
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
                           ),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const SizedBox(height: 10),
+                              Text("Create Account", style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 24),
                               MyTextField(
                                 controller: emailController,
                                 keyboardType: TextInputType.emailAddress,
                                 hintText: 'Email',
                                 obscureText: false,
-                                prefixIcon: const Icon(Icons.mail_lock_outlined),
+                                prefixIcon: const Icon(Icons.mail_outline),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) return 'Enter an email';
                                   if (!value.contains('@')) return 'Enter a valid email';
@@ -153,6 +154,19 @@ class _SignupScreenState extends State<SignupScreen> {
                                   return null;
                                 },
                               ),
+                              const SizedBox(height: 8),
+                              LinearProgressIndicator(
+                                value: passwordStrength,
+                                backgroundColor: Colors.grey.shade300,
+                                color: passwordStrength <= 0.25
+                                    ? Colors.red
+                                    : passwordStrength <= 0.5
+                                        ? Colors.orange
+                                        : passwordStrength <= 0.75
+                                            ? Colors.yellow
+                                            : Colors.green,
+                              ),
+                              const SizedBox(height: 16),
                               MyTextField(
                                 controller: confirmPasswordController,
                                 keyboardType: TextInputType.visiblePassword,
@@ -164,22 +178,33 @@ class _SignupScreenState extends State<SignupScreen> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 15),
+                              const SizedBox(height: 24),
                               auth.isLoading
                                   ? const CircularProgressIndicator()
                                   : MyButton(text: "Sign Up", onTap: signup),
-                              const SizedBox(height: 15),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                              const SizedBox(height: 24),
+                              const Row(
                                 children: [
-                                  GestureDetector(
-                                    onTap: widget.onTap,
-                                    child: const Text(
-                                      "Already a User ?",
-                                      style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
-                                    ),
+                                  Expanded(child: Divider()),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 16),
+                                    child: Text("OR"),
                                   ),
+                                  Expanded(child: Divider()),
                                 ],
+                              ),
+                              const SizedBox(height: 24),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  _socialButton(Icons.g_mobiledata, () {}),
+                                  _socialButton(Icons.apple, () {}),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
+                              TextButton(
+                                onPressed: widget.onTap,
+                                child: const Text("Already a User? Login"),
                               ),
                             ],
                           ),
@@ -192,6 +217,20 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _socialButton(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, size: 32),
       ),
     );
   }

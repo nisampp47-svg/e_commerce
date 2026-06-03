@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.e_commerce"
+    namespace = "com.coldnest.ecommerce"
 
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
@@ -15,10 +15,10 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.e_commerce"
+        applicationId = "com.coldnest.ecommerce"
 
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
 
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -29,11 +29,9 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
-}
 
-kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }
 

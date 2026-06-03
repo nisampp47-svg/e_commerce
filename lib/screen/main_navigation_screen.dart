@@ -1,51 +1,61 @@
-import 'package:e_commerce/screen/profile_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/navigation_viewmodel.dart';
-import 'Catelog_screen.dart';
-import 'cart_screen.dart';
-import 'home_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class MainNavigationScreen extends StatelessWidget {
-  const MainNavigationScreen({super.key, required Null Function() onTap});
+  final Widget child;
+  const MainNavigationScreen({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    final navProvider = Provider.of<NavigationViewmodel>(context);
+    final location = GoRouterState.of(context).matchedLocation;
 
-    final List<Widget> screens = [
-      MyHomeScreen(categories: [], products: []),
-      CatalogScreen(),
-       CartScreen(),
-      ProfileScreen(),
-    ];
+    int calculateSelectedIndex(String location) {
+      if (location == '/') return 0;
+      if (location == '/catalog') return 1;
+      if (location == '/cart') return 2;
+      if (location == '/profile') return 3;
+      return 0;
+    }
 
     return Scaffold(
-      body: screens[navProvider.selectedIndex],
-
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: navProvider.selectedIndex,
-        onTap: (index) {
-          navProvider.changeTab(index);
+      body: child,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: calculateSelectedIndex(location),
+        onDestinationSelected: (index) {
+          switch (index) {
+            case 0:
+              context.go('/');
+              break;
+            case 1:
+              context.go('/catalog');
+              break;
+            case 2:
+              context.go('/cart');
+              break;
+            case 3:
+              context.go('/profile');
+              break;
+          }
         },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.deepPurple,
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: "Home"),
-          BottomNavigationBarItem(
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: "Home",
+          ),
+          NavigationDestination(
             icon: Icon(Icons.auto_awesome_mosaic_outlined),
+            selectedIcon: Icon(Icons.auto_awesome_mosaic),
             label: "Catalog",
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.shopping_cart_outlined),
+            selectedIcon: Icon(Icons.shopping_cart),
             label: "Cart",
           ),
-          BottomNavigationBarItem(
+          NavigationDestination(
             icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
             label: "Profile",
           ),
         ],

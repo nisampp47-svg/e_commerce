@@ -9,9 +9,13 @@ class AuthController extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
-  // Sync user state on initialization
+  // Sync user state on initialization and listen to changes
   AuthController() {
     user = _authService.currentUser;
+    _authService.authStateChanges.listen((data) {
+      user = data.session?.user;
+      notifyListeners();
+    });
   }
 
   Future<void> login(String email, String password) async {

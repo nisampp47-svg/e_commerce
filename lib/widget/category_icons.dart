@@ -1,64 +1,75 @@
 import 'package:flutter/material.dart';
-import '../../model/category_model.dart';
+import 'package:e_commerce/model/category_model.dart';
 
 class CategoryIcons extends StatelessWidget {
   final CategoryModel category;
   final VoidCallback onTap;
+  final bool isSelected;
 
   const CategoryIcons({
     super.key,
     required this.category,
     required this.onTap,
+    this.isSelected = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: SizedBox(
+        width: 80, // equal spacing for all category items
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-
-            /// Circle Icon
             AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              height: 68,
-              width: 68,
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.surfaceContainerHighest,
                 shape: BoxShape.circle,
-                color: Colors.green.withAlpha(100), // ✅ brown when not selected
-                boxShadow: [
+                boxShadow: isSelected
+                    ? [
                   BoxShadow(
-                    color: Colors.black.withAlpha(20),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+                    : null,
               ),
               child: Icon(
-                category.icon,
-                size: 26,
-                color:             // ✅ blue when tapped
-                Colors.white,            // ✅ white when not selected
+                category.icon ?? Icons.grid_view_rounded,
+                size: 24,
+                color: isSelected
+                    ? theme.colorScheme.onPrimary
+                    : theme.colorScheme.onSurfaceVariant,
               ),
             ),
 
             const SizedBox(height: 8),
 
-            /// Title
             Text(
               category.categoryTitle,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-                color:
-                const Color(0xFF6F6F6F),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight:
+                isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurface,
               ),
             ),
           ],
         ),
+      ),
       ),
     );
   }

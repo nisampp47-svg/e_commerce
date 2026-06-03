@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../services/supabase_images.dart';
+
 class CartItemCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final VoidCallback onAdd;
@@ -23,9 +25,10 @@ class CartItemCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant,
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
         ),
       ),
       child: Row(
@@ -33,10 +36,10 @@ class CartItemCard extends StatelessWidget {
           /// IMAGE
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              item['image'],
-              width: 80,
-              height: 80,
+            child: SupabaseImage(
+              imageName: item['image'],
+              width: 90,
+              height: 90,
               fit: BoxFit.cover,
             ),
           ),
@@ -47,39 +50,49 @@ class CartItemCard extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   item['name'],
-                  style: const TextStyle(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
+                const SizedBox(height: 2),
+                Text(
+                  "₹${item['price']}",
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 4),
-
-                Text("₹${item['price']}"),
-
-                const SizedBox(height: 8),
-
                 Row(
                   children: [
-                    IconButton(
+                    _QuantityButton(
+                      icon: Icons.remove,
                       onPressed: onRemove,
-                      icon: const Icon(Icons.remove),
+                      theme: theme,
                     ),
-
-                    Text("$qty"),
-
-                    IconButton(
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        "$qty",
+                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    _QuantityButton(
+                      icon: Icons.add,
                       onPressed: onAdd,
-                      icon: const Icon(Icons.add),
+                      theme: theme,
                     ),
-
                     const Spacer(),
-
                     IconButton(
                       onPressed: onDelete,
-                      icon: const Icon(Icons.delete),
+                      icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                      visualDensity: VisualDensity.compact,
                     ),
                   ],
                 ),
@@ -87,6 +100,36 @@ class CartItemCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _QuantityButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+  final ThemeData theme;
+
+  const _QuantityButton({
+    required this.icon,
+    required this.onPressed,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 32,
+      height: 32,
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18),
+        style: IconButton.styleFrom(
+          backgroundColor: theme.colorScheme.surfaceContainerHighest,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
       ),
     );
   }

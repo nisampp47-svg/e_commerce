@@ -1,3 +1,4 @@
+import 'package:e_commerce/screen/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main_navigation_screen.dart';
@@ -21,7 +22,7 @@ class AuthGate extends StatelessWidget {
         // ✅ Check if valid session exists
         final session = snapshot.data?.session;
         if (session != null) {
-          return MainNavigationScreen(onTap: () {});
+          return const MainNavigationScreen(child: MyHomeScreen());
         }
 
         // ❌ Not logged in → Auth screen

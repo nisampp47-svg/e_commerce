@@ -7,7 +7,6 @@ version: 1.0.0+1
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
-
 dependencies:
   flutter:
     sdk: flutter
@@ -17,13 +16,17 @@ dependencies:
   google_fonts:
   shimmer:
   cached_network_image:
+  go_router:
   url_launcher:
   cupertino_icons:
   phonepe_payment_sdk:
   http:
   crypto:
   uuid:
+  flutter_dotenv:
+  app_links:
 
+  path: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -31,3 +34,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - .env
