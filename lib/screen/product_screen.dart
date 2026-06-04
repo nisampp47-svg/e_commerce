@@ -69,6 +69,8 @@ class _ProductHeroScreenState extends State<ProductHeroScreen>
                 tag: 'product_image_${product.id}',
                 child: SupabaseImage(
                   imageName: product.image,
+                  width: size.width,
+                  height: size.height * 0.45,
                   fit: BoxFit.cover,
                 ),
               ),
@@ -126,7 +128,8 @@ class _ProductHeroScreenState extends State<ProductHeroScreen>
                                     const Icon(Icons.star, size: 18, color: Colors.amber),
                                     const SizedBox(width: 4),
                                     Text(
-                                      product.rating?.toStringAsFixed(1) ?? "0.0",
+                                      product.rating.toStringAsFixed(1),
+
                                       style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                                     ),
                                     const SizedBox(width: 8),
@@ -206,6 +209,7 @@ class _ProductHeroScreenState extends State<ProductHeroScreen>
                 onPressed: () async {
                   final cart = Provider.of<CartProvider>(context, listen: false);
                   await cart.addToCart(product);
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('${product.name} added to cart')),
                   );

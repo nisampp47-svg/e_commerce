@@ -5,10 +5,8 @@ class ProductModel {
   final String image;
   final String categoryId;
   final bool isRecommended;
-  final double? rating;
+  final double rating;
   final String? description;
-  final List<String>? reviews;
-  final Map<String, String>? specifications;
 
   const ProductModel({
     required this.id,
@@ -16,10 +14,32 @@ class ProductModel {
     required this.price,
     required this.image,
     required this.categoryId,
-    this.rating,
-    this.isRecommended = true,
+    required this.isRecommended,
+    required this.rating,
     this.description,
-    this.reviews,
-    this.specifications,
   });
+
+  factory ProductModel.fromJson(Map<String, dynamic> json) {
+    return ProductModel(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      price: (json['price'] as num).toDouble(),
+      image: json['image'] as String,
+      categoryId: json['category_id'] as String,
+      isRecommended: json['is_recommended'] as bool? ?? false,
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      description: json['description'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'price': price,
+    'image': image,
+    'category_id': categoryId,
+    'is_recommended': isRecommended,
+    'rating': rating,
+    'description': description,
+  };
 }

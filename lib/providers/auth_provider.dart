@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../services/supabase_auth_service.dart'; // Verify your path matches
+import '../core/service_locator.dart';
+import '../data/repositories/interfaces/auth_repository.dart';
+import '../services/supabase_auth_service.dart';
 
 class AuthController extends ChangeNotifier {
+  final AuthRepository _authRepository = getIt<AuthRepository>();
   final SupabaseAuthService _authService = SupabaseAuthService();
 
   User? user;
@@ -24,12 +27,12 @@ class AuthController extends ChangeNotifier {
       errorMessage = null;
       notifyListeners();
 
-      final result = await _authService.signIn(
+      await _authRepository.signIn(
         email: email,
         password: password,
       );
 
-      user = result.user;
+      user = _authService.currentUser;
     } on AuthException catch (e) {
       errorMessage = e.message;
     } catch (e) {
@@ -46,13 +49,13 @@ class AuthController extends ChangeNotifier {
       errorMessage = null;
       notifyListeners();
 
-      final result = await _authService.createAccount(
+      await _authRepository.signUp(
         email: email,
         password: password,
         name: name,
       );
 
-      user = result.user;
+      user = _authService.currentUser;
     } on AuthException catch (e) {
       errorMessage = e.message;
     } catch (e) {
@@ -64,7 +67,7 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await _authService.signOut();
+    await _authRepository.signOut();
     user = null;
     notifyListeners();
   }

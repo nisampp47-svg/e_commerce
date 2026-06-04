@@ -45,7 +45,8 @@ class _ProductListCardState extends State<ProductListCard> {
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.large)),
                         child: SupabaseImage(
                           imageName: widget.product.image,
-                          width: double.infinity,
+                          width: 200, // Reasonable max width for grid items
+                          height: 200,
                           fit: BoxFit.cover,
                         ),
                       ),

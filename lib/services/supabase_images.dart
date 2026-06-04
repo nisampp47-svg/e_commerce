@@ -18,7 +18,7 @@ class SupabaseImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // We use getPublicUrl because it is static and perfect for caching.
+
     final imageUrl = Supabase.instance.client.storage
         .from('images')
         .getPublicUrl(imageName);
@@ -28,9 +28,17 @@ class SupabaseImage extends StatelessWidget {
       width: width,
       height: height,
       fit: fit,
-      // Shorter fade-in makes the app feel faster
+
+      // Fix: Use memCacheWidth/Height to avoid "Can't acquire next buffer" errors.
+      // This limits the decoded image size in the graphics buffer.
+      memCacheWidth: (width != null && width! > 0 && width != double.infinity)
+          ? (width! * MediaQuery.of(context).devicePixelRatio).round()
+          : 500, // Default max width for decoded images
+      memCacheHeight: (height != null && height! > 0 && height != double.infinity)
+          ? (height! * MediaQuery.of(context).devicePixelRatio).round()
+          : null,
+      
       fadeInDuration: const Duration(milliseconds: 300),
-      // This is shown while downloading
       placeholder: (context, url) => Container(
         color: Colors.grey[100],
         child: const Center(
@@ -41,7 +49,6 @@ class SupabaseImage extends StatelessWidget {
           ),
         ),
       ),
-      // This is shown if the image fails to load
       errorWidget: (context, url, error) => Container(
         color: Colors.grey[200],
         child: const Icon(Icons.broken_image, color: Colors.grey),

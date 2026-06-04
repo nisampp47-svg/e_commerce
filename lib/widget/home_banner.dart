@@ -20,6 +20,8 @@ class HomeBanner extends StatelessWidget {
             Positioned.fill(
               child: SupabaseImage(
                 imageName: 'brown_sofa.jpg',
+                width: MediaQuery.of(context).size.width,
+                height: 180,
                 fit: BoxFit.cover,
               ),
             ),

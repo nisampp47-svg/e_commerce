@@ -17,25 +17,31 @@ class CartDatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, fileName);
 
-    return await openDatabase(path, version: 2, onCreate: _createDB, onUpgrade: _onUpgrade);
+    return await openDatabase(path, version: 3, onCreate: _createDB, onUpgrade: _onUpgrade);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await db.execute('ALTER TABLE cart_items ADD COLUMN categoryId TEXT NOT NULL DEFAULT ""');
     }
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE cart_items ADD COLUMN description TEXT');
+      await db.execute('ALTER TABLE cart_items ADD COLUMN isRecommended INTEGER NOT NULL DEFAULT 0');
+    }
   }
 
   Future<void> _createDB(Database db, int version) async {
     await db.execute('''
       CREATE TABLE cart_items (
-        id          TEXT PRIMARY KEY,
-        name        TEXT NOT NULL,
-        price       REAL NOT NULL,
-        image       TEXT NOT NULL,
-        categoryId  TEXT NOT NULL,
-        rating      REAL,
-        quantity    INTEGER NOT NULL DEFAULT 1
+        id            TEXT PRIMARY KEY,
+        name          TEXT NOT NULL,
+        price         REAL NOT NULL,
+        image         TEXT NOT NULL,
+        categoryId    TEXT NOT NULL,
+        rating        REAL NOT NULL DEFAULT 0.0,
+        description   TEXT,
+        isRecommended INTEGER NOT NULL DEFAULT 0,
+        quantity      INTEGER NOT NULL DEFAULT 1
       )
     ''');
   }
@@ -46,9 +52,11 @@ class CartDatabaseHelper {
     required String name,
     required double price,
     required String image,
-    double? rating,
+    required double rating,
     required int quantity,
     required String categoryId,
+    String? description,
+    required bool isRecommended,
   }) async {
     final db = await database;
     await db.insert(
@@ -60,6 +68,8 @@ class CartDatabaseHelper {
           'image': image,
           'categoryId': categoryId,
           'rating': rating,
+          'description': description,
+          'isRecommended': isRecommended ? 1 : 0,
           'quantity': quantity,
         },
         conflictAlgorithm: ConflictAlgorithm.replace);

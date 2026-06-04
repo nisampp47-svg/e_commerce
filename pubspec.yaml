@@ -25,6 +25,8 @@ dependencies:
   uuid:
   flutter_dotenv:
   app_links:
+  get_it:
+  shared_preferences:
 
   path: any
 dev_dependencies:

@@ -44,6 +44,8 @@ class PopularItemCard extends StatelessWidget {
                   tag: 'popular_${product.id}',
                   child: SupabaseImage(
                     imageName: product.image,
+                    width: 95,
+                    height: 95,
                     fit: BoxFit.cover,
                   ),
                 ),

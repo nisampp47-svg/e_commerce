@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../model/product_model.dart';
-import '../data/cart_database_helper.dart';
+import '../core/service_locator.dart';
+import '../data/repositories/interfaces/cart_repository.dart';
 
 class CartItem {
   final ProductModel product;
@@ -11,7 +12,7 @@ class CartItem {
 }
 
 class CartProvider extends ChangeNotifier {
-  final CartDatabaseHelper _db = CartDatabaseHelper.instance;
+  final CartRepository _cartRepository = getIt<CartRepository>();
 
   final List<CartItem> _items = [];
   bool _isLoading = false;
@@ -31,7 +32,7 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final rows = await _db.fetchAllItems();
+      final rows = await _cartRepository.fetchAllItems();
       _items.clear();
 
       for (final row in rows) {
@@ -41,9 +42,9 @@ class CartProvider extends ChangeNotifier {
           name: row['name'] as String,
           price: (row['price'] as num).toDouble(),
           image: row['image'] as String,
-          rating: row['rating'] != null
-              ? (row['rating'] as num).toDouble()
-              : null,
+          rating: (row['rating'] as num?)?.toDouble() ?? 0.0,
+          description: row['description'] as String?,
+          isRecommended: (row['isRecommended'] as int? ?? 0) == 1,
         );
         _items.add(CartItem(product: product, quantity: row['quantity'] as int));
       }
@@ -61,10 +62,10 @@ class CartProvider extends ChangeNotifier {
 
     if (index != -1) {
       _items[index].quantity++;
-      await _db.updateQuantity(product.id, _items[index].quantity);
+      await _cartRepository.updateQuantity(product.id, _items[index].quantity);
     } else {
-      _items.add(CartItem(product: product,));
-      await _db.upsertItem(
+      _items.add(CartItem(product: product));
+      await _cartRepository.addItem(
         id: product.id,
         categoryId: product.categoryId,
         name: product.name,
@@ -72,6 +73,8 @@ class CartProvider extends ChangeNotifier {
         image: product.image,
         rating: product.rating,
         quantity: 1,
+        description: product.description,
+        isRecommended: product.isRecommended,
       );
     }
 
@@ -81,7 +84,7 @@ class CartProvider extends ChangeNotifier {
   // ── REMOVE ──────────────────────────────────────────────────────────────────
   Future<void> removeFromCart(String productId) async {
     _items.removeWhere((i) => i.product.id == productId);
-    await _db.deleteItem(productId);
+    await _cartRepository.deleteItem(productId);
     notifyListeners();
   }
 
@@ -90,7 +93,7 @@ class CartProvider extends ChangeNotifier {
     final index = _items.indexWhere((i) => i.product.id == productId);
     if (index != -1) {
       _items[index].quantity++;
-      await _db.updateQuantity(productId, _items[index].quantity);
+      await _cartRepository.updateQuantity(productId, _items[index].quantity);
       notifyListeners();
     }
   }
@@ -103,7 +106,7 @@ class CartProvider extends ChangeNotifier {
         await removeFromCart(productId);
       } else {
         _items[index].quantity--;
-        await _db.updateQuantity(productId, _items[index].quantity);
+        await _cartRepository.updateQuantity(productId, _items[index].quantity);
         notifyListeners();
       }
     }
@@ -112,7 +115,7 @@ class CartProvider extends ChangeNotifier {
   // ── CLEAR ALL ───────────────────────────────────────────────────────────────
   Future<void> clear() async {
     _items.clear();
-    await _db.clearAll();
+    await _cartRepository.clearAll();
     notifyListeners();
   }
 

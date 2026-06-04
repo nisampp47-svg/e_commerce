@@ -1,5 +1,6 @@
 import 'package:e_commerce/core/app_router.dart';
 import 'package:e_commerce/core/apptheme.dart';
+import 'package:e_commerce/core/service_locator.dart';
 import 'package:e_commerce/providers/auth_provider.dart';
 import 'package:e_commerce/providers/cart_provider.dart';
 import 'package:e_commerce/providers/navigation_viewmodel.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
@@ -14,13 +16,10 @@ final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 Future<void> main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
+
+    setupServiceLocator();
+
     await dotenv.load(fileName: ".env");
-
-
-
-
-
-
 
     final supabaseUrl = dotenv.env['SUPABASE_URL'];
     final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
@@ -33,6 +32,21 @@ Future<void> main() async {
       url: supabaseUrl,
       anonKey: supabaseAnonKey,
     );
+
+    // Load saved theme mode
+    final prefs = await SharedPreferences.getInstance();
+    final savedTheme = prefs.getString('theme_mode');
+    if (savedTheme == 'dark') {
+      themeNotifier.value = ThemeMode.dark;
+    } else if (savedTheme == 'light') {
+      themeNotifier.value = ThemeMode.light;
+    }
+
+    // Listen to theme changes and save to prefs
+    themeNotifier.addListener(() async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('theme_mode', themeNotifier.value == ThemeMode.dark ? 'dark' : 'light');
+    });
 
     final authController = AuthController();
     // Initialize router ONCE to prevent black screen on rebuilds
