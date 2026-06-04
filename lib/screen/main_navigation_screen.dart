@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../providers/search_provider.dart';
 
 class MainNavigationScreen extends StatelessWidget {
   final Widget child;
@@ -22,6 +24,9 @@ class MainNavigationScreen extends StatelessWidget {
       bottomNavigationBar: NavigationBar(
         selectedIndex: calculateSelectedIndex(location),
         onDestinationSelected: (index) {
+          // Clear search when switching tabs for a clean experience
+          context.read<SearchProvider>().clearSearch();
+
           switch (index) {
             case 0:
               context.go('/');

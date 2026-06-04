@@ -4,6 +4,7 @@ import 'package:e_commerce/data/repositories/product_data.dart';
 import 'package:e_commerce/model/category_model.dart';
 import 'package:e_commerce/widget/product_grid_view.dart';
 import 'package:e_commerce/widget/search_bar.dart';
+import 'package:e_commerce/screen/search_result_view.dart';
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
@@ -61,7 +62,11 @@ class _CatalogScreenState extends State<CatalogScreen>
                     children: [
                       _buildHeader(theme),
                       const SizedBox(height: 20),
-                      const MySearchBar(icon: Icons.qr_code_scanner_rounded),
+                      const MySearchBar(
+                        key: PageStorageKey('catalog_search'),
+                        icon: Icons.qr_code_scanner_rounded,
+                      ),
+                      const SearchResultsView(),
                       const SizedBox(height: 24),
                     ],
                   ),

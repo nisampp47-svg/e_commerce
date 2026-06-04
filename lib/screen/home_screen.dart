@@ -10,6 +10,7 @@ import 'package:e_commerce/widget/home_banner.dart';
 import 'package:e_commerce/widget/populer_item_card.dart';
 import 'package:e_commerce/widget/product_card.dart';
 import 'package:e_commerce/widget/search_bar.dart';
+import 'package:e_commerce/screen/search_result_view.dart';
 import 'package:e_commerce/model/product_model.dart';
 
 class MyHomeScreen extends StatefulWidget {
@@ -130,7 +131,15 @@ class _MyHomeScreenState extends State<MyHomeScreen> {
             // Search
             const Padding(
               padding: AppPadding.screenPadding,
-              child: MySearchBar(icon: Icons.tune),
+              child: Column(
+                children: [
+                  MySearchBar(
+                    key: PageStorageKey('home_search'), // Helps with some state preservation
+                    icon: Icons.tune,
+                  ),
+                  SearchResultsView(),
+                ],
+              ),
             ),
 
             // Banner

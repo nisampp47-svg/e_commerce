@@ -4,6 +4,7 @@ import 'package:e_commerce/core/service_locator.dart';
 import 'package:e_commerce/providers/auth_provider.dart';
 import 'package:e_commerce/providers/cart_provider.dart';
 import 'package:e_commerce/providers/navigation_viewmodel.dart';
+import 'package:e_commerce/providers/search_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
@@ -58,6 +59,7 @@ Future<void> main() async {
           ChangeNotifierProvider.value(value: authController),
           ChangeNotifierProvider(create: (_) => CartProvider()..loadCart()),
           ChangeNotifierProvider(create: (_) => NavigationViewmodel()),
+          ChangeNotifierProvider(create: (_) => SearchProvider()),
         ],
         child: MyApp(router: router),
       ),

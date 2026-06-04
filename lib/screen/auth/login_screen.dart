@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/app_constants.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/supabase_images.dart';
 import '../../widget/my_button.dart';
 import '../../widget/my_text_field.dart';
 
@@ -59,8 +60,8 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/login_sofa.jpg',
+            child: SupabaseImage(
+              imageName: 'login_sofa.jpg',
               fit: BoxFit.cover,
             ),
           ),
